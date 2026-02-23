@@ -1,0 +1,65 @@
+#!/usr/bin/env bash
+
+## Copyright (C) 2020-2024 Aditya Shakya <adi1090x@gmail.com>
+##
+## Script to manage brightness on Archcraft.
+
+# Icons
+iDIR="$HOME/.local/bin/scripts/icons"
+
+# Graphics card
+# CARD=`ls /sys/class/backlight | head -n 1`
+
+# Get brightness
+get_backlight() {
+    device=$(ls /sys/class/backlight | head -n 1)
+    current=$(brightnessctl -d "$device" get)
+    max=$(brightnessctl -d "$device" max)
+    percent=$(( 100 * current / max ))
+    echo "$percent"
+}
+
+# Get icons
+get_icon() {
+	backlight="$(get_backlight)"
+	current="${backlight%%%}"
+	if [[ ("$current" -ge "0") && ("$current" -le "20") ]]; then
+		icon="$iDIR"/brightness-2.svg
+	elif [[ ("$current" -ge "20") && ("$current" -le "40") ]]; then
+		icon="$iDIR"/brightness-4.svg
+	elif [[ ("$current" -ge "40") && ("$current" -le "60") ]]; then
+		icon="$iDIR"/brightness-5.svg
+	elif [[ ("$current" -ge "60") && ("$current" -le "80") ]]; then
+		icon="$iDIR"/brightness-6.svg
+	elif [[ ("$current" -ge "80") && ("$current" -le "100") ]]; then
+		icon="$iDIR"/brightness-7.svg
+	fi
+}
+
+# Notify 
+notify_bl() {
+	get_icon && notify-send -u low -r 500 -i "$icon" "Brightness : $(get_backlight) "
+}
+
+# Increase brightness
+
+inc_backlight(){
+	brightnessctl set +10% && notify_bl
+}
+
+# Decrease brightness
+
+dec_backlight(){
+	brightnessctl set 10%- && notify_bl
+}
+
+# Execute accordingly
+if [[ "$1" == "--get" ]]; then
+	get_backlight
+elif [[ "$1" == "--inc" ]]; then
+	inc_backlight
+elif [[ "$1" == "--dec" ]]; then
+	dec_backlight
+else
+	get_backlight
+fi
